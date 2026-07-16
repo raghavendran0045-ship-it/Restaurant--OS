@@ -1,28 +1,17 @@
-import Fastify from "fastify";
-import cors from "@fastify/cors";
+import { app } from "./server";
 
-async function start() {
-  const app = Fastify();
-
-  await app.register(cors);
-
-  app.get("/", async () => {
-    return {
-      message: "RestaurantOS API Running 🚀",
-    };
-  });
-
+const start = async () => {
   try {
     await app.listen({
       port: 4000,
       host: "0.0.0.0",
     });
 
-    console.log("🚀 API running at http://localhost:4000");
+    console.log("🚀 RestaurantOS API running on http://localhost:4000");
   } catch (err) {
-    console.error(err);
+    app.log.error(err);
     process.exit(1);
   }
-}
+};
 
 start();
