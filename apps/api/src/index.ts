@@ -7,7 +7,7 @@ const start = async () => {
       host: "0.0.0.0",
     });
 
-    console.log("🚀 RestaurantOS API running on http://localhost:4000");
+    console.log("RestaurantOS API running at http://localhost:4000");
   } catch (err) {
     app.log.error(err);
     process.exit(1);
@@ -15,3 +15,4 @@ const start = async () => {
 };
 
 start();
+
