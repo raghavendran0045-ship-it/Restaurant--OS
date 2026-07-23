@@ -5,6 +5,7 @@ import jwt from "@fastify/jwt";
 import { healthRoutes } from "./routes/health";
 import { authRoutes } from "./routes/auth";
 import { profileRoutes } from "./routes/profile";
+import { restaurantRoutes } from "./routes/restaurant";
 
 export const app = Fastify({
   logger: true,
@@ -24,5 +25,8 @@ app.register(authRoutes, {
 });
 
 app.register(profileRoutes, {
+  prefix: "/api/v1",
+});
+app.register(restaurantRoutes, {
   prefix: "/api/v1",
 });
