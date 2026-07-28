@@ -1,15 +1,19 @@
-import { errorHandler } from "./plugins/error-handler";
+import { menuItemRoutes } from "./routes/menuItem";
 import Fastify from "fastify";
 import jwt from "@fastify/jwt";
+
+import { errorHandler } from "./plugins/error-handler";
 
 import { healthRoutes } from "./routes/health";
 import { authRoutes } from "./routes/auth";
 import { profileRoutes } from "./routes/profile";
 import { restaurantRoutes } from "./routes/restaurant";
+import { categoryRoutes } from "./routes/category";
 
 export const app = Fastify({
   logger: true,
 });
+
 errorHandler(app);
 
 app.register(jwt, {
@@ -27,6 +31,14 @@ app.register(authRoutes, {
 app.register(profileRoutes, {
   prefix: "/api/v1",
 });
+
 app.register(restaurantRoutes, {
+  prefix: "/api/v1",
+});
+
+app.register(categoryRoutes, {
+  prefix: "/api/v1",
+});
+app.register(menuItemRoutes, {
   prefix: "/api/v1",
 });

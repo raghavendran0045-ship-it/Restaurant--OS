@@ -17,11 +17,47 @@ model User {
 }
 
 model Restaurant {
-  id        String   @id @default(cuid())
-  name      String
+  id         String      @id @default(cuid())
+  name       String
 
-  ownerId String @unique
-  owner   User   @relation(fields: [ownerId], references: [id])
+  ownerId    String      @unique
+  owner      User        @relation(fields: [ownerId], references: [id])
 
-  createdAt DateTime @default(now())
+  categories Category[]
+  menuItems  MenuItem[]
+
+  createdAt  DateTime    @default(now())
+}
+
+model Category {
+  id           String      @id @default(cuid())
+  name         String
+  restaurantId String
+
+  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuItems    MenuItem[]
+
+  createdAt    DateTime    @default(now())
+
+  @@index([restaurantId])
+}
+
+model MenuItem {
+  id            String      @id @default(cuid())
+  name          String
+  description   String?
+  price         Decimal     @db.Decimal(10,2)
+  imageUrl      String?
+  isAvailable   Boolean     @default(true)
+
+  restaurantId  String
+  categoryId    String
+
+  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime    @default(now())
+
+  @@index([restaurantId])
+  @@index([categoryId])
 }
