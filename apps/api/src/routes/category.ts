@@ -79,52 +79,110 @@ export async function categoryRoutes(app: FastifyInstance) {
     }
   );
 
-  // Update Category
-  app.patch(
-    "/categories/:id",
-    {
-      preHandler: [verifyJWT],
-    },
-    async (request, reply) => {
-      const { name } = updateCategorySchema.parse(request.body);
+ // Update Category
+app.patch(
+  "/categories/:id",
+  {
+    preHandler: [verifyJWT],
+  },
+  async (request, reply) => {
+    const { name } = updateCategorySchema.parse(request.body);
 
-      const { id } = request.params as {
-        id: string;
-      };
+    const { id } = request.params as {
+      id: string;
+    };
 
-      const updatedCategory = await prisma.category.update({
-        where: {
-          id,
-        },
-        data: {
-          name,
-        },
+    const user = request.user as {
+      id: string;
+    };
+
+    const restaurant = await prisma.restaurant.findUnique({
+      where: {
+        ownerId: user.id,
+      },
+    });
+
+    if (!restaurant) {
+      return reply.status(404).send({
+        message: "Restaurant not found",
       });
-
-      return reply.send(updatedCategory);
     }
-  );
+
+    const category = await prisma.category.findFirst({
+      where: {
+        id,
+        restaurantId: restaurant.id,
+      },
+    });
+
+    if (!category) {
+      return reply.status(404).send({
+        message: "Category not found",
+      });
+    }
+
+    const updatedCategory = await prisma.category.update({
+      where: {
+        id,
+      },
+      data: {
+        name,
+      },
+    });
+
+    return reply.send(updatedCategory);
+  }
+);
 
   // Delete Category
-  app.delete(
-    "/categories/:id",
-    {
-      preHandler: [verifyJWT],
-    },
-    async (request, reply) => {
-      const { id } = request.params as {
-        id: string;
-      };
+app.delete(
+  "/categories/:id",
+  {
+    preHandler: [verifyJWT],
+  },
+  async (request, reply) => {
+    const { id } = request.params as {
+      id: string;
+    };
 
-      await prisma.category.delete({
-        where: {
-          id,
-        },
-      });
+    const user = request.user as {
+      id: string;
+    };
 
-      return reply.send({
-        message: "Category deleted successfully",
+    const restaurant = await prisma.restaurant.findUnique({
+      where: {
+        ownerId: user.id,
+      },
+    });
+
+    if (!restaurant) {
+      return reply.status(404).send({
+        message: "Restaurant not found",
       });
     }
-  );
+
+    const category = await prisma.category.findFirst({
+      where: {
+        id,
+        restaurantId: restaurant.id,
+      },
+    });
+
+    if (!category) {
+      return reply.status(404).send({
+        message: "Category not found",
+      });
+    }
+
+    await prisma.category.delete({
+      where: {
+        id,
+      },
+    });
+
+    return reply.send({
+      message: "Category deleted successfully",
+    });
+  }
+);
 }

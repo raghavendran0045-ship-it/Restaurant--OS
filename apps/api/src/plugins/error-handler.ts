@@ -15,8 +15,10 @@ export async function errorHandler(app: FastifyInstance) {
       });
     }
 
+    // Temporary for debugging
     return reply.status(500).send({
-      message: "Internal Server Error",
+      message: error.message,
+      stack: process.env.NODE_ENV !== "production" ? error.stack : undefined,
     });
   });
 }
