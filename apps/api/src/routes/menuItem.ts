@@ -5,6 +5,7 @@ import {
   createMenuItemSchema,
   updateMenuItemSchema,
 } from "../schemas/menuItem";
+import { menuQuerySchema } from "../schemas/menuQuery";
 
 export async function menuItemRoutes(app: FastifyInstance) {
   // ==========================
@@ -60,46 +61,82 @@ export async function menuItemRoutes(app: FastifyInstance) {
       return reply.status(201).send(menuItem);
     }
   );
+// ==========================
+// Get Menu Items
+// ==========================
+app.get(
+  "/menu-items",
+  {
+    preHandler: [verifyJWT],
+  },
+  async (request, reply) => {
+    const user = request.user as { id: string };
 
-  // ==========================
-  // Get Menu Items
-  // ==========================
-  app.get(
-    "/menu-items",
-    {
-      preHandler: [verifyJWT],
-    },
-    async (request, reply) => {
-      const user = request.user as { id: string };
+    const restaurant = await prisma.restaurant.findUnique({
+      where: {
+        ownerId: user.id,
+      },
+    });
 
-      const restaurant = await prisma.restaurant.findUnique({
-        where: {
-          ownerId: user.id,
-        },
+    if (!restaurant) {
+      return reply.status(404).send({
+        message: "Restaurant not found",
       });
-
-      if (!restaurant) {
-        return reply.status(404).send({
-          message: "Restaurant not found",
-        });
-      }
-
-      const menuItems = await prisma.menuItem.findMany({
-        where: {
-          restaurantId: restaurant.id,
-        },
-        include: {
-          category: true,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-      });
-
-      return reply.send(menuItems);
     }
-  );
 
+    const query = menuQuerySchema.parse(request.query);
+
+    const where = {
+      restaurantId: restaurant.id,
+
+      ...(query.search && {
+        name: {
+          contains: query.search,
+          mode: "insensitive" as const,
+        },
+      }),
+
+      ...(query.categoryId && {
+        categoryId: query.categoryId,
+      }),
+
+      ...(query.isAvailable && {
+        isAvailable: query.isAvailable === "true",
+      }),
+    };
+
+    const total = await prisma.menuItem.count({
+      where,
+    });
+
+    const items = await prisma.menuItem.findMany({
+      where,
+
+      include: {
+        category: true,
+      },
+
+      orderBy: {
+        createdAt: "desc",
+      },
+
+      skip: (query.page - 1) * query.limit,
+
+      take: query.limit,
+    });
+
+    return reply.send({
+      items,
+
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        pages: Math.ceil(total / query.limit),
+      },
+    });
+  }
+);
   // ==========================
   // Get Single Menu Item
   // ==========================
