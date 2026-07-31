@@ -246,7 +246,63 @@ app.get(
     }
   );
 
+  
   // ==========================
+// Toggle Menu Item Availability
+// ==========================
+app.patch(
+  "/menu-items/:id/availability",
+  {
+    preHandler: [verifyJWT],
+  },
+  async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    const body = request.body as {
+      isAvailable: boolean;
+    };
+
+    const user = request.user as { id: string };
+
+    const restaurant = await prisma.restaurant.findUnique({
+      where: {
+        ownerId: user.id,
+      },
+    });
+
+    if (!restaurant) {
+      return reply.status(404).send({
+        message: "Restaurant not found",
+      });
+    }
+
+    const menuItem = await prisma.menuItem.findFirst({
+      where: {
+        id,
+        restaurantId: restaurant.id,
+      },
+    });
+
+    if (!menuItem) {
+      return reply.status(404).send({
+        message: "Menu item not found",
+      });
+    }
+
+    const updatedMenuItem = await prisma.menuItem.update({
+      where: {
+        id,
+      },
+      data: {
+        isAvailable: body.isAvailable,
+      },
+    });
+
+    return reply.send(updatedMenuItem);
+  }
+);
+
+// ==========================
   // Delete Menu Item
   // ==========================
   app.delete(

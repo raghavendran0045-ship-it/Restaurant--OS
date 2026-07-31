@@ -25,6 +25,7 @@ model Restaurant {
 
   categories Category[]
   menuItems  MenuItem[]
+  orders     Order[]
 
   createdAt  DateTime    @default(now())
 }
@@ -56,8 +57,58 @@ model MenuItem {
   restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
   category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
+  orderItems    OrderItem[]
+
   createdAt     DateTime    @default(now())
 
   @@index([restaurantId])
   @@index([categoryId])
+}
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model Order {
+  id             String        @id @default(cuid())
+
+  customerName   String?
+  customerPhone  String?
+
+  totalAmount    Decimal       @db.Decimal(10,2)
+
+  status         OrderStatus   @default(PENDING)
+
+  restaurantId   String
+
+  restaurant     Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  items          OrderItem[]
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([restaurantId])
+  @@index([status])
+}
+
+model OrderItem {
+  id          String     @id @default(cuid())
+
+  quantity    Int
+
+  price       Decimal    @db.Decimal(10,2)
+
+  orderId     String
+  menuItemId  String
+
+  order        Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
+
+  @@index([orderId])
+  @@index([menuItemId])
 }
