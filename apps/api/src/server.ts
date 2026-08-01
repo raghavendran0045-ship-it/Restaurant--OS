@@ -1,3 +1,4 @@
+import { dashboardRoutes } from "./routes/dashboard";
 import { orderRoutes } from "./routes/order";
 import { menuItemRoutes } from "./routes/menuItem";
 import Fastify from "fastify";
@@ -47,3 +48,7 @@ app.register(menuItemRoutes, {
 app.register(orderRoutes, {
   prefix: "/api/v1",
 });
+app.register(dashboardRoutes, {
+  prefix: "/api/v1",
+});
+
