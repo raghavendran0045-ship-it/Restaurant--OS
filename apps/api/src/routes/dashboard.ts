@@ -159,4 +159,91 @@ app.get(
   }
 );
 
+// ==========================
+// Top Selling Items
+// ==========================
+app.get(
+  "/dashboard/top-selling",
+  {
+    preHandler: [verifyJWT],
+  },
+  async (request, reply) => {
+
+    const user = request.user as {
+      id: string;
+    };
+
+
+    const restaurant =
+      await prisma.restaurant.findUnique({
+        where: {
+          ownerId: user.id,
+        },
+      });
+
+
+    if (!restaurant) {
+      return reply.status(404).send({
+        message: "Restaurant not found",
+      });
+    }
+
+
+    const items =
+      await prisma.orderItem.groupBy({
+        by: [
+          "menuItemId",
+        ],
+
+        _sum: {
+          quantity: true,
+        },
+
+        orderBy: {
+          _sum: {
+            quantity: "desc",
+          },
+        },
+
+        take: 5,
+      });
+
+
+    const menuItems =
+      await prisma.menuItem.findMany({
+        where: {
+          id: {
+            in: items.map(
+              (item) => item.menuItemId
+            ),
+          },
+        },
+      });
+
+
+    const result = items.map(
+      (item) => {
+
+        const menuItem =
+          menuItems.find(
+            (m) =>
+              m.id === item.menuItemId
+          );
+
+
+        return {
+          name: menuItem?.name,
+          quantity:
+            item._sum.quantity ?? 0,
+        };
+      }
+    );
+
+
+    return reply.send({
+      topSellingItems: result,
+    });
+  }
+);
+
 }
