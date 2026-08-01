@@ -246,4 +246,119 @@ app.get(
   }
 );
 
+// ==========================
+// Sales Analytics
+// ==========================
+app.get(
+  "/dashboard/sales",
+  {
+    preHandler: [verifyJWT],
+  },
+  async (request, reply) => {
+
+    const user = request.user as {
+      id: string;
+    };
+
+
+    const restaurant =
+      await prisma.restaurant.findUnique({
+        where: {
+          ownerId: user.id,
+        },
+      });
+
+
+    if (!restaurant) {
+      return reply.status(404).send({
+        message: "Restaurant not found",
+      });
+    }
+
+
+    const now = new Date();
+
+
+    const startOfToday =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+
+
+    const startOfWeek =
+      new Date(startOfToday);
+
+    startOfWeek.setDate(
+      startOfWeek.getDate() - startOfWeek.getDay()
+    );
+
+
+    const startOfMonth =
+      new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1
+      );
+
+
+    const today =
+      await prisma.order.aggregate({
+        where: {
+          restaurantId: restaurant.id,
+          status: "COMPLETED",
+          createdAt: {
+            gte: startOfToday,
+          },
+        },
+        _sum: {
+          totalAmount: true,
+        },
+      });
+
+
+    const week =
+      await prisma.order.aggregate({
+        where: {
+          restaurantId: restaurant.id,
+          status: "COMPLETED",
+          createdAt: {
+            gte: startOfWeek,
+          },
+        },
+        _sum: {
+          totalAmount: true,
+        },
+      });
+
+
+    const month =
+      await prisma.order.aggregate({
+        where: {
+          restaurantId: restaurant.id,
+          status: "COMPLETED",
+          createdAt: {
+            gte: startOfMonth,
+          },
+        },
+        _sum: {
+          totalAmount: true,
+        },
+      });
+
+
+    return reply.send({
+      todaySales:
+        Number(today._sum.totalAmount ?? 0),
+
+      weeklySales:
+        Number(week._sum.totalAmount ?? 0),
+
+      monthlySales:
+        Number(month._sum.totalAmount ?? 0),
+    });
+  }
+);
+
 }
