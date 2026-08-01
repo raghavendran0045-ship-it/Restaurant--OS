@@ -13,6 +13,8 @@ import { restaurantRoutes } from "./routes/restaurant";
 import { categoryRoutes } from "./routes/category";
 import { publicMenuRoutes } from "./routes/publicMenu";
 import { publicOrderRoutes } from "./routes/publicOrder";
+import { kitchenRoutes } from "./routes/kitchen";
+
 
 
 export const app = Fastify({
@@ -60,4 +62,8 @@ app.register(publicMenuRoutes, {
 
 app.register(publicOrderRoutes,{
   prefix:"/api/v1"
+});
+
+app.register(kitchenRoutes, {
+  prefix: "/api/v1",
 });
