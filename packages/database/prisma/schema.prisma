@@ -17,53 +17,54 @@ model User {
 }
 
 model Restaurant {
-  id         String      @id @default(cuid())
-  name       String
+  id   String @id @default(cuid())
+  name String
 
-  ownerId    String      @unique
-  owner      User        @relation(fields: [ownerId], references: [id])
+  ownerId String @unique
+  owner   User   @relation(fields: [ownerId], references: [id])
 
   categories Category[]
   menuItems  MenuItem[]
   orders     Order[]
 
-  createdAt  DateTime    @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Category {
-  id           String      @id @default(cuid())
+  id           String @id @default(cuid())
   name         String
   restaurantId String
 
-  restaurant   Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  menuItems    MenuItem[]
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  menuItems  MenuItem[]
 
-  createdAt    DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@index([restaurantId])
 }
 
 model MenuItem {
-  id            String      @id @default(cuid())
-  name          String
-  description   String?
-  price         Decimal     @db.Decimal(10,2)
-  imageUrl      String?
-  isAvailable   Boolean     @default(true)
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal @db.Decimal(10, 2)
+  imageUrl    String?
+  isAvailable Boolean @default(true)
 
-  restaurantId  String
-  categoryId    String
+  restaurantId String
+  categoryId   String
 
-  restaurant    Restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  category      Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  orderItems    OrderItem[]
+  orderItems OrderItem[]
 
-  createdAt     DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@index([restaurantId])
   @@index([categoryId])
 }
+
 enum OrderStatus {
   PENDING
   PREPARING
@@ -73,42 +74,53 @@ enum OrderStatus {
 }
 
 model Order {
-  id             String        @id @default(cuid())
+  id String @id @default(cuid())
 
-  customerName   String?
-  customerPhone  String?
+  orderNumber String? @unique
 
-  totalAmount    Decimal       @db.Decimal(10,2)
+  customerName  String?
+  customerPhone String?
 
-  status         OrderStatus   @default(PENDING)
+  totalAmount Decimal @db.Decimal(10, 2)
 
-  restaurantId   String
+  status       OrderStatus @default(PENDING)
+  restaurantId String
 
-  restaurant     Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
 
-  items          OrderItem[]
+  items OrderItem[]
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([restaurantId])
   @@index([status])
 }
 
-model OrderItem {
-  id          String     @id @default(cuid())
+model Restaurant {
+  id         String      @id @default(cuid())
+  name       String
 
-  quantity    Int
+  ownerId    String      @unique
+  owner      User        @relation(fields: [ownerId], references: [id])
 
-  price       Decimal    @db.Decimal(10,2)
+  categories Category[]
+  menuItems  MenuItem[]
+  orders     Order[]
+  orderCounter OrderCounter?
 
-  orderId     String
-  menuItemId  String
+  createdAt  DateTime @default(now())
+}
 
-  order        Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+model OrderCounter {
+  id           String @id @default(cuid())
 
-  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
+  restaurantId String @unique
+  lastNumber   Int @default(0)
 
-  @@index([orderId])
-  @@index([menuItemId])
+  restaurant Restaurant @relation(
+    fields: [restaurantId],
+    references: [id],
+    onDelete: Cascade
+  )
 }

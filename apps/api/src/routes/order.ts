@@ -5,7 +5,13 @@ import { prisma } from "@repo/database";
 import { verifyJWT } from "../plugins/auth";
 import { createOrderSchema } from "../schemas/order";
 
+function generateOrderNumber() {
+  return `ORD-${Date.now()}`;
+}
+
 export async function orderRoutes(app: FastifyInstance) {
+
+  
   app.post(
     "/orders",
     {
@@ -56,14 +62,15 @@ export async function orderRoutes(app: FastifyInstance) {
       }
 
       const order = await prisma.$transaction(async (tx) => {
-        const createdOrder = await tx.order.create({
-          data: {
-            customerName: data.customerName,
-            customerPhone: data.customerPhone,
-            totalAmount,
-            restaurantId: restaurant.id,
-          },
-        });
+       const createdOrder = await tx.order.create({
+  data: {
+    orderNumber: generateOrderNumber(),
+    customerName: data.customerName,
+    customerPhone: data.customerPhone,
+    totalAmount,
+    restaurantId: restaurant.id,
+  },
+});
 
         await tx.orderItem.createMany({
           data: data.items.map((item) => {
@@ -275,3 +282,4 @@ app.get(
 
 
 }
+
