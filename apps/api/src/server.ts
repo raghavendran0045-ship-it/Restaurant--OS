@@ -11,6 +11,8 @@ import { authRoutes } from "./routes/auth";
 import { profileRoutes } from "./routes/profile";
 import { restaurantRoutes } from "./routes/restaurant";
 import { categoryRoutes } from "./routes/category";
+import { publicMenuRoutes } from "./routes/publicMenu";
+
 
 export const app = Fastify({
   logger: true,
@@ -51,4 +53,8 @@ app.register(orderRoutes, {
 app.register(dashboardRoutes, {
   prefix: "/api/v1",
 });
+app.register(publicMenuRoutes, {
+  prefix: "/api/v1",
+});
+
 
