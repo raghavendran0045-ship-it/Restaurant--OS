@@ -168,19 +168,15 @@ app.get(
     preHandler: [verifyJWT],
   },
   async (request, reply) => {
-
     const user = request.user as {
       id: string;
     };
 
-
-    const restaurant =
-      await prisma.restaurant.findUnique({
-        where: {
-          ownerId: user.id,
-        },
-      });
-
+    const restaurant = await prisma.restaurant.findUnique({
+      where: {
+        ownerId: user.id,
+      },
+    });
 
     if (!restaurant) {
       return reply.status(404).send({
@@ -188,60 +184,46 @@ app.get(
       });
     }
 
-
-    const items =
-      await prisma.orderItem.groupBy({
-        by: [
-          "menuItemId",
-        ],
-
-        _sum: {
-          quantity: true,
+    const orderItems = await prisma.orderItem.findMany({
+      where: {
+        order: {
+          restaurantId: restaurant.id,
         },
-
-        orderBy: {
-          _sum: {
-            quantity: "desc",
+      },
+      select: {
+        quantity: true,
+        menuItem: {
+          select: {
+            name: true,
           },
         },
+      },
+    });
 
-        take: 5,
-      });
+    const totals = new Map<string, number>();
 
+    for (const item of orderItems) {
+      const name = item.menuItem.name;
+      const currentQuantity = totals.get(name) ?? 0;
 
-    const menuItems =
-      await prisma.menuItem.findMany({
-        where: {
-          id: {
-            in: items.map(
-              (item) => item.menuItemId
-            ),
-          },
-        },
-      });
+      totals.set(
+        name,
+        currentQuantity + item.quantity
+      );
+    }
 
-
-    const result = items.map(
-      (item) => {
-
-        const menuItem =
-          menuItems.find(
-            (m) =>
-              m.id === item.menuItemId
-          );
-
-
-        return {
-          name: menuItem?.name,
-          quantity:
-            item._sum.quantity ?? 0,
-        };
-      }
-    );
-
+    const topSellingItems = Array.from(
+      totals.entries()
+    )
+      .map(([name, quantity]) => ({
+        name,
+        quantity,
+      }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 5);
 
     return reply.send({
-      topSellingItems: result,
+      topSellingItems,
     });
   }
 );

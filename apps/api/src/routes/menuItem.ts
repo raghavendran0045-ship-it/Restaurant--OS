@@ -46,19 +46,29 @@ export async function menuItemRoutes(app: FastifyInstance) {
         });
       }
 
-      const menuItem = await prisma.menuItem.create({
-        data: {
-          name: data.name,
-          description: data.description,
-          price: data.price,
-          imageUrl: data.imageUrl,
-          isAvailable: data.isAvailable ?? true,
-          categoryId: data.categoryId,
-          restaurantId: restaurant.id,
-        },
-      });
+      try {
+  const menuItem = await prisma.menuItem.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      price: data.price,
+      imageUrl: data.imageUrl,
+      isAvailable: data.isAvailable ?? true,
+      categoryId: data.categoryId,
+      restaurantId: restaurant.id,
+    },
+  });
 
-      return reply.status(201).send(menuItem);
+  return reply.status(201).send(menuItem);
+} catch (error: any) {
+  if (error?.code === "P2002") {
+    return reply.status(409).send({
+      message: "A menu item with this name already exists.",
+    });
+  }
+
+  throw error;
+}
     }
   );
 // ==========================
